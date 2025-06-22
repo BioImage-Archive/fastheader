@@ -5,6 +5,7 @@ import mmap
 from pathlib import Path
 from typing import BinaryIO, Union
 import sys
+import io
 
 from .base import ByteReader, AsyncByteReader
 
@@ -16,11 +17,19 @@ class LocalByteReader:
         self.bytes_fetched = 0
         self._file = None
         self._mmap = None
+        self._data = None  # For in-memory sources
         self._should_close_file = False
         
         if hasattr(source, 'read'):
             # BinaryIO object
             self._file = source
+            # Check if it's an in-memory object like BytesIO
+            if isinstance(source, (io.BytesIO, io.BufferedReader)) and hasattr(source, 'getvalue'):
+                # For BytesIO, read all data upfront
+                current_pos = source.tell()
+                source.seek(0)
+                self._data = source.read()
+                source.seek(current_pos)
         else:
             # Path or str
             self._file = open(source, 'rb')
@@ -28,28 +37,37 @@ class LocalByteReader:
     
     def _ensure_mmap(self):
         """Create mmap on first access."""
-        if self._mmap is None:
+        if self._mmap is None and self._data is None:
             if self._file.seekable():
                 self._file.seek(0, 2)  # Seek to end
                 file_size = self._file.tell()
                 if file_size == 0:
                     raise IOError("Cannot mmap empty file")
-                self._mmap = mmap.mmap(self._file.fileno(), 0, access=mmap.ACCESS_READ)
+                try:
+                    self._mmap = mmap.mmap(self._file.fileno(), 0, access=mmap.ACCESS_READ)
+                except (io.UnsupportedOperation, OSError):
+                    # Fallback for files that don't support fileno() (like BytesIO)
+                    self._file.seek(0)
+                    self._data = self._file.read()
             else:
                 raise IOError("File is not seekable, cannot use mmap")
     
     def fetch(self, start: int, length: int) -> bytes:
         """Return exactly `length` bytes starting at absolute offset `start`."""
-        self._ensure_mmap()
+        if self._data is None:
+            self._ensure_mmap()
         
         if start < 0:
             raise IOError("Start offset cannot be negative")
         
-        if start + length > len(self._mmap):
-            raise IOError(f"Not enough data: requested {length} bytes at offset {start}, "
-                         f"but file only has {len(self._mmap)} bytes")
+        # Use either mmap or in-memory data
+        source = self._mmap if self._mmap is not None else self._data
         
-        data = self._mmap[start:start + length]
+        if start + length > len(source):
+            raise IOError(f"Not enough data: requested {length} bytes at offset {start}, "
+                         f"but file only has {len(source)} bytes")
+        
+        data = source[start:start + length]
         self.bytes_fetched += len(data)
         return data
     
