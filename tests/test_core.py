@@ -15,7 +15,7 @@ class DummyParser(HeaderParser):
     priority: ClassVar[int] = 50
 
     @classmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         return Result(
             success=True,
             data={"format": "TEST", "width": 100, "height": 200},
@@ -24,7 +24,7 @@ class DummyParser(HeaderParser):
         )
 
     @classmethod
-    async def read(cls, reader, *, bytes_peek: int | None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         return Result(
             success=True,
             data={"format": "TEST", "width": 100, "height": 200},
@@ -40,7 +40,7 @@ class HighPriorityParser(HeaderParser):
     priority: ClassVar[int] = 10
 
     @classmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         return Result(
             success=True,
             data={"format": "HIGH", "priority": True},
@@ -49,7 +49,7 @@ class HighPriorityParser(HeaderParser):
         )
 
     @classmethod
-    async def read(cls, reader, *, bytes_peek: int | None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         return Result(
             success=True,
             data={"format": "HIGH", "priority": True},

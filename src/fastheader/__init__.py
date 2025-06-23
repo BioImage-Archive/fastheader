@@ -22,8 +22,8 @@ async def read_header(source, *, bytes_peek: int | None = None) -> Result:
             # Even smaller, get first 512 bytes
             first_kb = await reader.fetch(0, 512)
     parser_cls = _REGISTRY.choose(source, first_kb)
-    # 2) delegate
-    return await parser_cls.read(reader, bytes_peek=bytes_peek)
+    # 2) delegate - pass the already-fetched data to avoid double-fetch
+    return await parser_cls.read(reader, bytes_peek=bytes_peek, _prefetched_header=first_kb)
 
 
 def read_header_sync(source, *, bytes_peek: int | None = None) -> Result:
@@ -39,7 +39,7 @@ def read_header_sync(source, *, bytes_peek: int | None = None) -> Result:
             # Even smaller, get first 512 bytes
             first_kb = reader.fetch(0, 512)
     parser_cls = _REGISTRY.choose(source, first_kb)
-    return parser_cls.read_sync(reader, bytes_peek=bytes_peek)
+    return parser_cls.read_sync(reader, bytes_peek=bytes_peek, _prefetched_header=first_kb)
 
 
 __all__ = [

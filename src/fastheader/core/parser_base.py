@@ -14,14 +14,14 @@ class HeaderParser(ABC):
     # --- sync ---
     @classmethod
     @abstractmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         """Read header synchronously from a ByteReader."""
         ...
 
     # --- async ---
     @classmethod
     @abstractmethod
-    async def read(cls, reader, *, bytes_peek: int | None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         """Read header asynchronously from an AsyncByteReader."""
         ...
 
