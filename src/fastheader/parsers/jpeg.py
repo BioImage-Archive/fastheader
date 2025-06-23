@@ -56,7 +56,23 @@ class JPEGParser(HeaderParser):
             buf.extend(_prefetched_header)
         else:
             # initial pull - get what we can, starting with _CHUNK
-            chunk = reader.fetch(0, _CHUNK)
+            try:
+                chunk = reader.fetch(0, _CHUNK)
+            except Exception as e:
+                # If we can't get _CHUNK bytes, try smaller amounts
+                if "Not enough data" in str(e) or "requested" in str(e):
+                    try:
+                        chunk = reader.fetch(0, 1024)
+                    except Exception:
+                        try:
+                            chunk = reader.fetch(0, 256)
+                        except Exception:
+                            try:
+                                chunk = reader.fetch(0, 64)
+                            except Exception:
+                                raise ParseError("File too small to be a valid JPEG")
+                else:
+                    raise
             buf.extend(chunk)
 
         if len(buf) < 2 or buf[:2] != SOI:
@@ -171,7 +187,23 @@ class JPEGParser(HeaderParser):
             buf.extend(_prefetched_header)
         else:
             # initial pull - get what we can, starting with _CHUNK
-            chunk = await reader.fetch(0, _CHUNK)
+            try:
+                chunk = await reader.fetch(0, _CHUNK)
+            except Exception as e:
+                # If we can't get _CHUNK bytes, try smaller amounts
+                if "Not enough data" in str(e) or "requested" in str(e):
+                    try:
+                        chunk = await reader.fetch(0, 1024)
+                    except Exception:
+                        try:
+                            chunk = await reader.fetch(0, 256)
+                        except Exception:
+                            try:
+                                chunk = await reader.fetch(0, 64)
+                            except Exception:
+                                raise ParseError("File too small to be a valid JPEG")
+                else:
+                    raise
             buf.extend(chunk)
 
         if len(buf) < 2 or buf[:2] != SOI:
