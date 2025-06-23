@@ -4,7 +4,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import typer
 
@@ -14,7 +14,7 @@ from .core.util import result_asdict
 app = typer.Typer(add_completion=False, help="Extract header info from files and URLs.")
 
 
-def iter_sources(files: Tuple[str, ...]) -> list[str]:
+def iter_sources(files: list[str]) -> list[str]:
     """Get list of sources from files argument or stdin."""
     if files and files != ("-",):
         return list(files)
@@ -24,7 +24,7 @@ def iter_sources(files: Tuple[str, ...]) -> list[str]:
 
 @app.command()
 def main(
-    files: Tuple[str, ...] = typer.Argument(None, help="Files or URLs to process, or '-' for stdin"),
+    files: list[str] = typer.Argument(None, help="Files or URLs to process, or '-' for stdin"),
     bytes: Optional[int] = typer.Option(None, "--bytes", min=0, help="Peek first N bytes (Base64)"),
     fields: Optional[str] = typer.Option(None, "--fields", help="Comma-separated subset of keys to emit"),
     jsonl: bool = typer.Option(False, "--jsonl", help="Force JSON-lines output"),
