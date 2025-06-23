@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, Any, Iterable
 from .model import Result
 
+# FIXME - this is very MRC specific, should be in the MRC parser
 _DTYPE_MAP = {
     0: "int8", 1: "int16", 2: "float32", 6: "uint16",  # used by MRC etc.
     # add more as needed
