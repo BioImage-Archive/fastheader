@@ -1,34 +1,19 @@
-[project]
-name = "fastheader"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "requests>=2.32.4",
-]
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+
 
 [project]
 name = "fastheader"
 version = "0.1.0"
 description = "A python library and client for extracting file headers quickly"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "requests",
     "httpx",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-asyncio",
-    "pytest-httpserver",
-    "pytest-cov",
-]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -50,4 +35,12 @@ exclude_lines = [
     "def __repr__",
     "raise AssertionError",
     "raise NotImplementedError",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio",
+    "pytest-httpserver",
+    "pytest-cov",
 ]
