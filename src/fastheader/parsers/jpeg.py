@@ -65,7 +65,10 @@ class JPEGParser(HeaderParser):
                     try:
                         chunk = reader.fetch(0, 256)
                     except (IOError, OSError):
-                        raise ParseError("File too small to be a valid JPEG")
+                        try:
+                            chunk = reader.fetch(0, 64)
+                        except (IOError, OSError):
+                            raise ParseError("File too small to be a valid JPEG")
         
         buf.extend(chunk)
 
@@ -130,14 +133,24 @@ class JPEGParser(HeaderParser):
     # --------------------------- sync ---------------------------------- #
     @classmethod
     def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
-        w, h, end_off = cls._find_sof_sync(reader)
-        return cls._build_result(w, h, reader, bytes_peek, end_off)
+        try:
+            w, h, end_off = cls._find_sof_sync(reader)
+            return cls._build_result(w, h, reader, bytes_peek, end_off)
+        except ParseError as e:
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+        except Exception as e:
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
 
     # -------------------------- async ---------------------------------- #
     @classmethod
     async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
-        w, h, end_off = await cls._find_sof_async(reader)
-        return cls._build_result(w, h, reader, bytes_peek, end_off)
+        try:
+            w, h, end_off = await cls._find_sof_async(reader)
+            return cls._build_result(w, h, reader, bytes_peek, end_off)
+        except ParseError as e:
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+        except Exception as e:
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
 
     @classmethod
     async def _find_sof_async(cls, reader) -> tuple[int, int, int]:
@@ -180,7 +193,10 @@ class JPEGParser(HeaderParser):
                     try:
                         chunk = await reader.fetch(0, 256)
                     except (IOError, OSError):
-                        raise ParseError("File too small to be a valid JPEG")
+                        try:
+                            chunk = await reader.fetch(0, 64)
+                        except (IOError, OSError):
+                            raise ParseError("File too small to be a valid JPEG")
         
         buf.extend(chunk)
 

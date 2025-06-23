@@ -319,8 +319,10 @@ class TestJPEGHTTP:
         
         def mock_request(method, url, **kwargs):
             if method == "HEAD":
-                mock_response.status_code = 200
-                return mock_response
+                head_response = Mock()
+                head_response.status_code = 200
+                head_response.headers = mock_response.headers
+                return head_response
             elif method == "GET":
                 headers = kwargs.get("headers", {})
                 range_header = headers.get("Range")
