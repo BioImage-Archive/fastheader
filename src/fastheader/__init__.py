@@ -10,9 +10,17 @@ from .parsers import mrc  # noqa: F401
 
 async def read_header(source, *, bytes_peek: int | None = None) -> Result:
     """Read header asynchronously from a source (path, URL, or file-like object)."""
-    # 1) open reader + sniff first 4 KB
+    # 1) open reader + sniff first 4 KB (or whatever is available)
     reader = await open_reader_async(source)
-    first_kb = await reader.fetch(0, 4096)
+    try:
+        first_kb = await reader.fetch(0, 4096)
+    except (IOError, OSError):
+        # File might be smaller than 4KB, try to get what we can
+        try:
+            first_kb = await reader.fetch(0, 1024)
+        except (IOError, OSError):
+            # Even smaller, get first 512 bytes
+            first_kb = await reader.fetch(0, 512)
     parser_cls = _REGISTRY.choose(source, first_kb)
     # 2) delegate
     return await parser_cls.read(reader, bytes_peek=bytes_peek)
@@ -21,7 +29,15 @@ async def read_header(source, *, bytes_peek: int | None = None) -> Result:
 def read_header_sync(source, *, bytes_peek: int | None = None) -> Result:
     """Read header synchronously from a source (path, URL, or file-like object)."""
     reader = open_reader(source)
-    first_kb = reader.fetch(0, 4096)
+    try:
+        first_kb = reader.fetch(0, 4096)
+    except (IOError, OSError):
+        # File might be smaller than 4KB, try to get what we can
+        try:
+            first_kb = reader.fetch(0, 1024)
+        except (IOError, OSError):
+            # Even smaller, get first 512 bytes
+            first_kb = reader.fetch(0, 512)
     parser_cls = _REGISTRY.choose(source, first_kb)
     return parser_cls.read_sync(reader, bytes_peek=bytes_peek)
 
