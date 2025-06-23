@@ -55,25 +55,8 @@ class JPEGParser(HeaderParser):
         if _prefetched_header:
             buf.extend(_prefetched_header)
         else:
-            # initial pull - try to get _CHUNK bytes, but handle small files
-            try:
-                chunk = reader.fetch(0, _CHUNK)
-            except (IOError, OSError):
-                # File smaller than _CHUNK, try smaller amounts
-                try:
-                    chunk = reader.fetch(0, 1024)
-                except (IOError, OSError):
-                    try:
-                        chunk = reader.fetch(0, 512)
-                    except (IOError, OSError):
-                        try:
-                            chunk = reader.fetch(0, 256)
-                        except (IOError, OSError):
-                            try:
-                                chunk = reader.fetch(0, 64)
-                            except (IOError, OSError):
-                                raise ParseError("File too small to be a valid JPEG")
-            
+            # initial pull - get what we can, starting with _CHUNK
+            chunk = reader.fetch(0, _CHUNK)
             buf.extend(chunk)
 
         if len(buf) < 2 or buf[:2] != SOI:
@@ -187,25 +170,8 @@ class JPEGParser(HeaderParser):
         if _prefetched_header:
             buf.extend(_prefetched_header)
         else:
-            # initial pull - try to get _CHUNK bytes, but handle small files
-            try:
-                chunk = await reader.fetch(0, _CHUNK)
-            except (IOError, OSError):
-                # File smaller than _CHUNK, try smaller amounts
-                try:
-                    chunk = await reader.fetch(0, 1024)
-                except (IOError, OSError):
-                    try:
-                        chunk = await reader.fetch(0, 512)
-                    except (IOError, OSError):
-                        try:
-                            chunk = await reader.fetch(0, 256)
-                        except (IOError, OSError):
-                            try:
-                                chunk = await reader.fetch(0, 64)
-                            except (IOError, OSError):
-                                raise ParseError("File too small to be a valid JPEG")
-            
+            # initial pull - get what we can, starting with _CHUNK
+            chunk = await reader.fetch(0, _CHUNK)
             buf.extend(chunk)
 
         if len(buf) < 2 or buf[:2] != SOI:
