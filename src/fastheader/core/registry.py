@@ -10,20 +10,22 @@ from .model import UnknownFormatError
 
 class ParserRegistry:
     def __init__(self) -> None:
-        self._by_ext: Dict[str, List[tuple[int, Type[HeaderParser]]]] = defaultdict(list)
-        self._parsers: List[tuple[int, Type[HeaderParser]]] = []   # sorted by priority
+        self._by_ext: Dict[str, List[tuple[int, str, Type[HeaderParser]]]] = defaultdict(list)
+        self._parsers: List[tuple[int, str, Type[HeaderParser]]] = []   # sorted by priority
 
     # called from HeaderParser.__init_subclass__
     def register(self, parser_cls: Type[HeaderParser]) -> None:
-        bisect.insort(self._parsers, (parser_cls.priority, parser_cls))
+        # Use (priority, class_name, parser_cls) to ensure stable sorting
+        entry = (parser_cls.priority, parser_cls.__name__, parser_cls)
+        bisect.insort(self._parsers, entry)
         for ext in parser_cls.formats:
             # Insert in priority order (lower priority number = higher priority)
             ext_list = self._by_ext[ext]
-            bisect.insort(ext_list, (parser_cls.priority, parser_cls))
+            bisect.insort(ext_list, entry)
 
     # --- detection helpers ---
     def _sniff(self, first_kb: bytes) -> Type[HeaderParser] | None:
-        for _, p in self._parsers:
+        for _, _, p in self._parsers:
             for offset, pat in p.signatures:
                 if len(first_kb) >= offset + len(pat):
                     if first_kb[offset : offset + len(pat)] == pat:
@@ -38,7 +40,7 @@ class ParserRegistry:
         # 2) extension hint
         ext = Path(str(source)).suffix.lower().lstrip(".")
         if ext and (lst := self._by_ext.get(ext)):
-            return lst[0][1]             # first by priority (extract parser from tuple)
+            return lst[0][2]             # first by priority (extract parser from tuple)
         raise UnknownFormatError(f"No parser for {source!s}")
 
 
