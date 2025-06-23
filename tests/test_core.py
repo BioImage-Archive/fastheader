@@ -223,9 +223,10 @@ class TestDtypeFromCode:
 
     def test_known_codes(self):
         """Test conversion of known dtype codes."""
-        assert dtype_from_code(0) == "uint8"
+        assert dtype_from_code(0) == "int8"
         assert dtype_from_code(1) == "int16"
         assert dtype_from_code(2) == "float32"
+        assert dtype_from_code(6) == "uint16"
 
     def test_unknown_code(self):
         """Test handling of unknown dtype codes."""
