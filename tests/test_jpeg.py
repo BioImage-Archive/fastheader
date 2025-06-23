@@ -96,10 +96,10 @@ class TestJPEGParser:
         
         assert result.success is True
         assert result.error is None
-        assert result.metadata["format"] == "JPEG"
-        assert result.metadata["width"] == 32
-        assert result.metadata["height"] == 16
-        assert result.metadata["dtype"] == "uint8"
+        assert result.meta["format"] == "JPEG"
+        assert result.meta["width"] == 32
+        assert result.meta["height"] == 16
+        assert result.meta["dtype"] == "uint8"
         assert result.bytes_fetched <= 4096  # Should fit in first chunk
 
     @pytest.mark.asyncio
@@ -109,10 +109,10 @@ class TestJPEGParser:
         
         assert result.success is True
         assert result.error is None
-        assert result.metadata["format"] == "JPEG"
-        assert result.metadata["width"] == 32
-        assert result.metadata["height"] == 16
-        assert result.metadata["dtype"] == "uint8"
+        assert result.meta["format"] == "JPEG"
+        assert result.meta["width"] == 32
+        assert result.meta["height"] == 16
+        assert result.meta["dtype"] == "uint8"
         assert result.bytes_fetched <= 4096
 
     def test_large_app1_jpeg_sync(self, large_app1_jpeg_file: Path):
@@ -120,10 +120,10 @@ class TestJPEGParser:
         result = read_header_sync(large_app1_jpeg_file)
         
         assert result.success is True
-        assert result.metadata["format"] == "JPEG"
-        assert result.metadata["width"] == 200
-        assert result.metadata["height"] == 100
-        assert result.metadata["dtype"] == "uint8"
+        assert result.meta["format"] == "JPEG"
+        assert result.meta["width"] == 200
+        assert result.meta["height"] == 100
+        assert result.meta["dtype"] == "uint8"
         # Should need more than one chunk but less than 64KB
         assert 4096 < result.bytes_fetched < 65536
 
@@ -132,10 +132,10 @@ class TestJPEGParser:
         result = read_header_sync(tiny_jpeg_file, bytes_peek=100)
         
         assert result.success is True
-        assert "peek_bytes_b64" in result.metadata
+        assert "peek_bytes_b64" in result.meta
         
         # Decode and verify we got 100 bytes
-        peek_bytes = base64.b64decode(result.metadata["peek_bytes_b64"])
+        peek_bytes = base64.b64decode(result.meta["peek_bytes_b64"])
         assert len(peek_bytes) == 100
         assert peek_bytes.startswith(b"\xFF\xD8")  # Should start with SOI
 
@@ -193,10 +193,10 @@ class TestJPEGParser:
         
         result = read_header_sync(progressive_jpeg)
         assert result.success is True
-        assert result.metadata["format"] == "JPEG"
-        assert result.metadata["width"] == 384
-        assert result.metadata["height"] == 256
-        assert result.metadata["dtype"] == "uint8"
+        assert result.meta["format"] == "JPEG"
+        assert result.meta["width"] == 384
+        assert result.meta["height"] == 256
+        assert result.meta["dtype"] == "uint8"
 
     def test_parser_registration(self):
         """Test that JPEG parser is properly registered."""
@@ -293,10 +293,10 @@ class TestJPEGHTTP:
             result = await read_header("http://example.com/test.jpg")
             
             assert result.success is True
-            assert result.metadata["format"] == "JPEG"
-            assert result.metadata["width"] == 32
-            assert result.metadata["height"] == 16
-            assert result.metadata["dtype"] == "uint8"
+            assert result.meta["format"] == "JPEG"
+            assert result.meta["width"] == 32
+            assert result.meta["height"] == 16
+            assert result.meta["dtype"] == "uint8"
             # Should use range requests efficiently
             assert result.bytes_fetched <= 4096
             
@@ -319,6 +319,7 @@ class TestJPEGHTTP:
         
         def mock_request(method, url, **kwargs):
             if method == "HEAD":
+                mock_response.status_code = 200
                 return mock_response
             elif method == "GET":
                 headers = kwargs.get("headers", {})
@@ -355,7 +356,7 @@ class TestJPEGHTTP:
             result = read_header_sync("http://example.com/test.jpg")
             
             assert result.success is True
-            assert result.metadata["format"] == "JPEG"
-            assert result.metadata["width"] == 32
-            assert result.metadata["height"] == 16
-            assert result.metadata["dtype"] == "uint8"
+            assert result.meta["format"] == "JPEG"
+            assert result.meta["width"] == 32
+            assert result.meta["height"] == 16
+            assert result.meta["dtype"] == "uint8"
