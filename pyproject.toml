@@ -9,7 +9,11 @@ requires-python = ">=3.12"
 dependencies = [
     "requests",
     "httpx",
+    "typer",
 ]
+
+[project.scripts]
+fastheader = "fastheader.cli:app"
 
 [build-system]
 requires = ["hatchling"]
