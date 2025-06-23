@@ -10,14 +10,16 @@ from .model import UnknownFormatError
 
 class ParserRegistry:
     def __init__(self) -> None:
-        self._by_ext: Dict[str, List[Type[HeaderParser]]] = defaultdict(list)
+        self._by_ext: Dict[str, List[tuple[int, Type[HeaderParser]]]] = defaultdict(list)
         self._parsers: List[tuple[int, Type[HeaderParser]]] = []   # sorted by priority
 
     # called from HeaderParser.__init_subclass__
     def register(self, parser_cls: Type[HeaderParser]) -> None:
         bisect.insort(self._parsers, (parser_cls.priority, parser_cls))
         for ext in parser_cls.formats:
-            self._by_ext[ext].append(parser_cls)
+            # Insert in priority order (lower priority number = higher priority)
+            ext_list = self._by_ext[ext]
+            bisect.insort(ext_list, (parser_cls.priority, parser_cls))
 
     # --- detection helpers ---
     def _sniff(self, first_kb: bytes) -> Type[HeaderParser] | None:
@@ -36,7 +38,7 @@ class ParserRegistry:
         # 2) extension hint
         ext = Path(str(source)).suffix.lower().lstrip(".")
         if ext and (lst := self._by_ext.get(ext)):
-            return lst[0]                 # first by priority
+            return lst[0][1]             # first by priority (extract parser from tuple)
         raise UnknownFormatError(f"No parser for {source!s}")
 
 
