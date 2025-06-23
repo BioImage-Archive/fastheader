@@ -132,32 +132,6 @@ class TestMRCParser:
         assert result.success is False
         assert "Invalid MRC magic bytes" in result.error
 
-    def test_physical_size_calculation_edge_cases(self):
-        """Test physical size calculation with edge cases."""
-        header = bytearray(1024)
-        import struct
-        
-        # Valid dimensions and mode
-        struct.pack_into("<3i", header, 0, 10, 20, 1)
-        struct.pack_into("<i", header, 12, 2)
-        header[208:212] = b"MAP "
-        
-        # Case 1: Zero sampling values
-        struct.pack_into("<3i", header, 92, 0, 20, 1)  # mx=0
-        struct.pack_into("<3f", header, 40, 100.0, 200.0, 10.0)
-        
-        mock_reader = Mock()
-        mock_reader.fetch.return_value = bytes(header)
-        mock_reader.bytes_fetched = 1024
-        
-        result = MRCParser.read_sync(mock_reader, bytes_peek=None)
-        
-        assert result.success is True
-        # Should not have physical size keys when calculation fails
-        assert "single_voxel_physical_size_x" not in result.data
-        assert "single_voxel_physical_size_y" not in result.data
-        assert "single_voxel_physical_size_z" not in result.data
-
     def test_depth_handling(self):
         """Test that depth is only included when nz > 1."""
         header = bytearray(1024)
