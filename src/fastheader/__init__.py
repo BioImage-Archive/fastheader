@@ -4,6 +4,9 @@ from .core.model import Result, UnknownFormatError, ParseError        # re-expor
 from .core.registry import _REGISTRY                                  # singleton
 from .io import open_reader, open_reader_async                        # Task 1
 
+# Import parsers to trigger registration
+from .parsers import mrc  # noqa: F401
+
 
 async def read_header(source, *, bytes_peek: int | None = None) -> Result:
     """Read header asynchronously from a source (path, URL, or file-like object)."""

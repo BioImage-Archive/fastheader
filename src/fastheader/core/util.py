@@ -3,7 +3,7 @@ from typing import Dict, Any, Iterable
 from .model import Result
 
 _DTYPE_MAP = {
-    0: "uint8", 1: "int16", 2: "float32",  # used by MRC etc.
+    0: "int8", 1: "int16", 2: "float32", 6: "uint16",  # used by MRC etc.
     # add more as needed
 }
 
