@@ -26,7 +26,7 @@ class JPEGParser(HeaderParser):
 
     # ------------------------------------------------------------------ #
     @classmethod
-    def _find_sof_sync(cls, reader) -> tuple[int, int, int]:
+    def _find_sof_sync(cls, reader, _prefetched_header: bytes | None = None) -> tuple[int, int, int]:
         """Return (width, height, final_offset) - sync version."""
         buf = bytearray()
         offset = 0
@@ -51,26 +51,30 @@ class JPEGParser(HeaderParser):
                     except (IOError, OSError):
                         raise ParseError("Unexpected end of file")
 
-        # initial pull - try to get _CHUNK bytes, but handle small files
-        try:
-            chunk = reader.fetch(0, _CHUNK)
-        except (IOError, OSError):
-            # File smaller than _CHUNK, try smaller amounts
+        # Use prefetched header if available
+        if _prefetched_header:
+            buf.extend(_prefetched_header)
+        else:
+            # initial pull - try to get _CHUNK bytes, but handle small files
             try:
-                chunk = reader.fetch(0, 1024)
+                chunk = reader.fetch(0, _CHUNK)
             except (IOError, OSError):
+                # File smaller than _CHUNK, try smaller amounts
                 try:
-                    chunk = reader.fetch(0, 512)
+                    chunk = reader.fetch(0, 1024)
                 except (IOError, OSError):
                     try:
-                        chunk = reader.fetch(0, 256)
+                        chunk = reader.fetch(0, 512)
                     except (IOError, OSError):
                         try:
-                            chunk = reader.fetch(0, 64)
+                            chunk = reader.fetch(0, 256)
                         except (IOError, OSError):
-                            raise ParseError("File too small to be a valid JPEG")
-        
-        buf.extend(chunk)
+                            try:
+                                chunk = reader.fetch(0, 64)
+                            except (IOError, OSError):
+                                raise ParseError("File too small to be a valid JPEG")
+            
+            buf.extend(chunk)
 
         if len(buf) < 2 or buf[:2] != SOI:
             raise ParseError("Missing SOI marker")
@@ -134,7 +138,7 @@ class JPEGParser(HeaderParser):
     @classmethod
     def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         try:
-            w, h, end_off = cls._find_sof_sync(reader)
+            w, h, end_off = cls._find_sof_sync(reader, _prefetched_header)
             return cls._build_result(w, h, reader, bytes_peek, end_off)
         except ParseError as e:
             return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
@@ -145,7 +149,7 @@ class JPEGParser(HeaderParser):
     @classmethod
     async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
         try:
-            w, h, end_off = await cls._find_sof_async(reader)
+            w, h, end_off = await cls._find_sof_async(reader, _prefetched_header)
             return cls._build_result(w, h, reader, bytes_peek, end_off)
         except ParseError as e:
             return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
@@ -153,7 +157,7 @@ class JPEGParser(HeaderParser):
             return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
 
     @classmethod
-    async def _find_sof_async(cls, reader) -> tuple[int, int, int]:
+    async def _find_sof_async(cls, reader, _prefetched_header: bytes | None = None) -> tuple[int, int, int]:
         """Async version of _find_sof."""
         buf = bytearray()
         offset = 0
@@ -179,26 +183,30 @@ class JPEGParser(HeaderParser):
                     except (IOError, OSError):
                         raise ParseError("Unexpected end of file")
 
-        # initial pull - try to get _CHUNK bytes, but handle small files
-        try:
-            chunk = await reader.fetch(0, _CHUNK)
-        except (IOError, OSError):
-            # File smaller than _CHUNK, try smaller amounts
+        # Use prefetched header if available
+        if _prefetched_header:
+            buf.extend(_prefetched_header)
+        else:
+            # initial pull - try to get _CHUNK bytes, but handle small files
             try:
-                chunk = await reader.fetch(0, 1024)
+                chunk = await reader.fetch(0, _CHUNK)
             except (IOError, OSError):
+                # File smaller than _CHUNK, try smaller amounts
                 try:
-                    chunk = await reader.fetch(0, 512)
+                    chunk = await reader.fetch(0, 1024)
                 except (IOError, OSError):
                     try:
-                        chunk = await reader.fetch(0, 256)
+                        chunk = await reader.fetch(0, 512)
                     except (IOError, OSError):
                         try:
-                            chunk = await reader.fetch(0, 64)
+                            chunk = await reader.fetch(0, 256)
                         except (IOError, OSError):
-                            raise ParseError("File too small to be a valid JPEG")
-        
-        buf.extend(chunk)
+                            try:
+                                chunk = await reader.fetch(0, 64)
+                            except (IOError, OSError):
+                                raise ParseError("File too small to be a valid JPEG")
+            
+            buf.extend(chunk)
 
         if len(buf) < 2 or buf[:2] != SOI:
             raise ParseError("Missing SOI marker")
