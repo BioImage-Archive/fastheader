@@ -27,17 +27,8 @@ class MRCParser(HeaderParser):
         if magic != b"MAP ":
             raise ParseError(f"Invalid MRC magic bytes: {magic!r}")
         
-        # Parse dimensions
-        nx, ny, nz = struct.unpack_from("<3i", header, 0)
-        
-        # Parse mode (data type)
-        mode, = struct.unpack_from("<i", header, 12)
-        
-        # Parse sampling
-        mx, my, mz = struct.unpack_from("<3i", header, 92)
-        
-        # Parse unit cell dimensions (Angstroms)
-        cella = struct.unpack_from("<3f", header, 40)
+        nx, ny, nz, mode = struct.unpack_from("<4i", header, 0)
+        cella_x, cella_y, cella_z = struct.unpack_from("<3f", header, 40)
 
         # Get dtype string
         dtype = dtype_from_code(mode)
@@ -45,12 +36,10 @@ class MRCParser(HeaderParser):
             raise ParseError(f"Unsupported mode {mode}")
 
         # Calculate physical voxel sizes
-        if all(v > 0 for v in (mx, my, mz)) and all(dim > 0 for dim in cella):
-            sx = cella[0] * _A2M / mx
-            sy = cella[1] * _A2M / my
-            sz = cella[2] * _A2M / mz
-        else:
-            sx = sy = sz = None
+        # physical spacing (Å → m) — axis-by-axis, ignore zeros
+        sx = (cella_x * _A2M / nx) if (nx and cella_x) else None
+        sy = (cella_y * _A2M / ny) if (ny and cella_y) else None
+        sz = (cella_z * _A2M / nz) if (nz and cella_z) else None
 
         result = {
             "format": "MRC",
