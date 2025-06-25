@@ -132,11 +132,12 @@ class TestCLI:
         """Test stdin mode with '-' argument."""
         if not tiny_mrc_path.exists():
             pytest.skip("tiny.mrc fixture not found")
-            
-        input_data = str(tiny_mrc_path) + "\n"
+
+        # Use absolute path for stdin to avoid ambiguity
+        input_data = str(tiny_mrc_path.resolve()) + "\n"
         result = runner.invoke(app, ["-"], input=input_data)
-        
-        assert result.exit_code == 0
+
+        assert result.exit_code == 0, result.stderr
         obj = json.loads(result.stdout)
         assert obj["success"] is True
         assert obj["format"] == "MRC"

@@ -52,6 +52,14 @@ class LocalByteReader:
             else:
                 raise IOError("File is not seekable, cannot use mmap")
     
+    @property
+    def size(self) -> int:
+        """Return the total size of the source in bytes."""
+        if self._data is not None:
+            return len(self._data)
+        self._ensure_mmap()
+        return len(self._mmap) if self._mmap is not None else 0
+
     def fetch(self, start: int, length: int) -> bytes:
         """Return exactly `length` bytes starting at absolute offset `start`."""
         if self._data is None:
@@ -93,6 +101,11 @@ class LocalAsyncByteReader:
     def __init__(self, source: Union[Path, str, BinaryIO]):
         self._sync_reader = LocalByteReader(source)
     
+    @property
+    def size(self) -> int:
+        """Return the total size of the source in bytes."""
+        return self._sync_reader.size
+
     @property
     def bytes_fetched(self) -> int:
         return self._sync_reader.bytes_fetched

@@ -9,6 +9,7 @@ from typing import Optional
 import typer
 
 from . import read_header, read_header_sync
+from .core.model import Result
 from .core.util import result_asdict
 
 app = typer.Typer(add_completion=False, help="Extract header info from files and URLs.")
@@ -35,7 +36,7 @@ def main(
     sel_fields = set(fields.split(",")) if fields else None
     sources = iter_sources(files)
     
-    if not sources:
+    if not files or files == ["-"]:
         typer.echo("No input files given.", err=True)
         raise typer.Exit(code=1)
 
@@ -49,7 +50,10 @@ def main(
     results = []
     if run_sync:
         for src in sources:
-            res = read_header_sync(src, bytes_peek=bytes)
+            try:
+                res = read_header_sync(str(Path(src).resolve()), bytes_peek=bytes)
+            except Exception as e:
+                res = Result(success=False, data=None, error=str(e), bytes_fetched=0)
             results.append(res)
     else:
         async def _batch():

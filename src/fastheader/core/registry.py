@@ -39,6 +39,7 @@ class ParserRegistry:
             return parser
         # 2) extension hint
         ext = Path(str(source)).suffix.lower().lstrip(".")
+
         if ext and (lst := self._by_ext.get(ext)):
             return lst[0][2]             # first by priority (extract parser from tuple)
         raise UnknownFormatError(f"No parser for {source!s}")
