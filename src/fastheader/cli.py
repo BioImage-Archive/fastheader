@@ -1,3 +1,4 @@
+
 """CLI implementation for fastheader."""
 
 import asyncio
@@ -5,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 import typer
 
@@ -23,6 +25,12 @@ def iter_sources(files: list[str]) -> list[str]:
     return [ln.strip() for ln in sys.stdin if ln.strip()]
 
 
+async def _batch_read(sources: list[str], bytes_peek: Optional[int]) -> list[Result]:
+    """Asynchronously read headers from a list of sources."""
+    tasks = [read_header(src, bytes_peek=bytes_peek) for src in sources]
+    return await asyncio.gather(*tasks)
+
+
 @app.command()
 def main(
     files: list[str] = typer.Argument(None, help="Files or URLs to process, or '-' for stdin"),
@@ -36,31 +44,28 @@ def main(
     sel_fields = set(fields.split(",")) if fields else None
     sources = iter_sources(files)
     
-    if not files or files == ["-"]:
+    if not sources:
         typer.echo("No input files given.", err=True)
         raise typer.Exit(code=1)
 
     # decide sync vs async
-    try:
-        loop = asyncio.get_running_loop()
-        run_sync = sync  # Force sync if requested
-    except RuntimeError:
-        run_sync = True  # No loop running, use sync
+    run_sync = sync  # Force sync if requested
 
-    results = []
+    results: list[Result] = []
     if run_sync:
         for src in sources:
             try:
-                res = read_header_sync(str(Path(src).resolve()), bytes_peek=bytes)
+                # Check if src is a URL
+                parsed_url = urlparse(src)
+                if parsed_url.scheme and parsed_url.netloc:  # It's a URL
+                    res = read_header_sync(src, bytes_peek=bytes)
+                else:  # It's a local path
+                    res = read_header_sync(str(Path(src).resolve()), bytes_peek=bytes)
             except Exception as e:
                 res = Result(success=False, data=None, error=str(e), bytes_fetched=0)
             results.append(res)
     else:
-        async def _batch():
-            for src in sources:
-                res = await read_header(src, bytes_peek=bytes)
-                results.append(res)
-        asyncio.run(_batch())
+        results = asyncio.run(_batch_read(sources, bytes))
 
     # open output sink
     sink = open(output, "w", encoding="utf-8") if output else sys.stdout
@@ -86,3 +91,4 @@ def main(
 
 if __name__ == "__main__":
     app()
+
