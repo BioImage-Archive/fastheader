@@ -19,16 +19,28 @@ app = typer.Typer(add_completion=False, help="Extract header info from files and
 
 def iter_sources(files: list[str]) -> list[str]:
     """Get list of sources from files argument or stdin."""
-    if files and files != ("-",):
+    if "-" in files:
+        # stdin mode
+        stdin_lines = [ln.strip() for ln in sys.stdin if ln.strip()]
+        if not stdin_lines:
+            return []
+        return stdin_lines
+    elif files:
         return list(files)
-    # stdin mode
-    return [ln.strip() for ln in sys.stdin if ln.strip()]
+    return []
 
 
 async def _batch_read(sources: list[str], bytes_peek: Optional[int]) -> list[Result]:
     """Asynchronously read headers from a list of sources."""
     tasks = [read_header(src, bytes_peek=bytes_peek) for src in sources]
-    return await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    processed_results = []
+    for res in results:
+        if isinstance(res, Exception):
+            processed_results.append(Result(success=False, data=None, error=str(res), bytes_fetched=0))
+        else:
+            processed_results.append(res)
+    return processed_results
 
 
 @app.command()
