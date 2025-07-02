@@ -1,6 +1,7 @@
 from __future__ import annotations
 import base64
 import struct
+import warnings
 from typing import ClassVar, Sequence
 
 from ..core.parser_base import HeaderParser, Signature
@@ -25,7 +26,7 @@ class MRCParser(HeaderParser):
         # Check magic bytes
         magic = header[208:212]
         if magic != b"MAP ":
-            raise ParseError(f"Invalid MRC magic bytes: {magic!r}")
+            warnings.warn(f"Invalid MRC magic bytes: {magic!r}")
         
         nx, ny, nz, mode = struct.unpack_from("<4i", header, 0)
         cella_x, cella_y, cella_z = struct.unpack_from("<3f", header, 40)
