@@ -18,6 +18,7 @@ async def test_png_parser_async(tiny_png_path):
     assert result.data["width"] == 10
     assert result.data["height"] == 20
     assert result.data["format"] == "PNG"
+    assert result.requests_made > 0
 
 def test_png_parser_sync(tiny_png_path):
     reader = open_local_reader(tiny_png_path)
@@ -26,3 +27,4 @@ def test_png_parser_sync(tiny_png_path):
     assert result.data["width"] == 10
     assert result.data["height"] == 20
     assert result.data["format"] == "PNG"
+    assert result.requests_made > 0

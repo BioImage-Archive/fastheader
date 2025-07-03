@@ -33,6 +33,7 @@ class TestMRCParser:
         assert result.success is True
         assert result.error is None
         assert result.bytes_fetched == 1024
+        assert result.requests_made > 0
         
         data = result.data
         assert data["format"] == "MRC"
@@ -59,6 +60,7 @@ class TestMRCParser:
         assert result.success is True
         assert result.error is None
         assert result.bytes_fetched == 1024
+        assert result.requests_made > 0
         
         data = result.data
         assert data["format"] == "MRC"
@@ -76,6 +78,7 @@ class TestMRCParser:
         
         assert result.success is True
         assert "peek_bytes_b64" in result.data
+        assert result.requests_made > 0
         
         # Decode and verify peek data
         peek_data = base64.b64decode(result.data["peek_bytes_b64"])
@@ -96,22 +99,26 @@ class TestMRCParser:
         mock_reader = Mock()
         mock_reader.fetch.return_value = bytes(header)
         mock_reader.bytes_fetched = 1024
+        mock_reader.requests_made = 1
         
         result = MRCParser.read_sync(mock_reader, bytes_peek=None)
         
         assert result.success is False
         assert "Unsupported mode 99" in result.error
+        assert result.requests_made > 0
 
     def test_truncated_header_error(self):
         """Test that truncated header raises ParseError."""
         mock_reader = Mock()
         mock_reader.fetch.return_value = b"short"  # too short
         mock_reader.bytes_fetched = 5
+        mock_reader.requests_made = 1
         
         result = MRCParser.read_sync(mock_reader, bytes_peek=None)
         
         assert result.success is False
         assert "Header truncated" in result.error
+        assert result.requests_made > 0
 
     def test_invalid_magic_bytes(self):
         """Test that invalid magic bytes raise ParseError."""
@@ -126,12 +133,14 @@ class TestMRCParser:
         mock_reader = Mock()
         mock_reader.fetch.return_value = bytes(header)
         mock_reader.bytes_fetched = 1024
+        mock_reader.requests_made = 1
         
         with pytest.warns(UserWarning, match="Invalid MRC magic bytes: b'XXXX'"):
             result = MRCParser.read_sync(mock_reader, bytes_peek=None)
         
         assert result.success is True
         assert result.data["format"] == "MRC"
+        assert result.requests_made > 0
 
     def test_depth_handling(self):
         """Test that depth is only included when nz > 1."""
@@ -148,11 +157,13 @@ class TestMRCParser:
         mock_reader = Mock()
         mock_reader.fetch.return_value = bytes(header)
         mock_reader.bytes_fetched = 1024
+        mock_reader.requests_made = 1
         
         result = MRCParser.read_sync(mock_reader, bytes_peek=None)
         
         assert result.success is True
         assert result.data["depth"] == 5
+        assert result.requests_made > 0
 
     def test_parser_registration(self):
         """Test that MRCParser is properly registered."""

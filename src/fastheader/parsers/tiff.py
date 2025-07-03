@@ -250,11 +250,11 @@ class TIFFParser(HeaderParser):
                 peek = hdr[:bytes_peek] if bytes_peek <= cls._HEADER_SIZE else hdr + reader.fetch(cls._HEADER_SIZE, bytes_peek - cls._HEADER_SIZE)
                 meta["peek_bytes_b64"] = base64.b64encode(peek).decode()
 
-            return Result(True, meta, None, reader.bytes_fetched)
+            return Result(True, meta, None, reader.bytes_fetched, reader.requests_made)
         except (ParseError, struct.error) as e:
-            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
         except Exception as e:
-            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
 
     @classmethod
     async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
@@ -267,10 +267,10 @@ class TIFFParser(HeaderParser):
                 peek = hdr[:bytes_peek] if bytes_peek <= cls._HEADER_SIZE else hdr + await reader.fetch(cls._HEADER_SIZE, bytes_peek - cls._HEADER_SIZE)
                 meta["peek_bytes_b64"] = base64.b64encode(peek).decode()
 
-            return Result(True, meta, None, reader.bytes_fetched)
+            return Result(True, meta, None, reader.bytes_fetched, reader.requests_made)
         except (ParseError, struct.error) as e:
-            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
         except Exception as e:
-            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
 
 

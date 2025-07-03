@@ -37,7 +37,7 @@ async def _batch_read(sources: list[str], bytes_peek: Optional[int], count_ifds:
     processed_results = []
     for res in results:
         if isinstance(res, Exception):
-            processed_results.append(Result(success=False, data=None, error=str(res), bytes_fetched=0))
+            processed_results.append(Result(success=False, data=None, error=str(res), bytes_fetched=0, requests_made=0))
         else:
             processed_results.append(res)
     return processed_results
@@ -75,10 +75,15 @@ def main(
                 else:  # It's a local path
                     res = read_header_sync(str(Path(src).resolve()), bytes_peek=bytes, count_ifds=count_ifds)
             except Exception as e:
-                res = Result(success=False, data=None, error=str(e), bytes_fetched=0)
+                res = Result(success=False, data=None, error=str(e), bytes_fetched=0, requests_made=0)
             results.append(res)
     else:
-        results = asyncio.run(_batch_read(sources, bytes, count_ifds))
+        processed_results = asyncio.run(_batch_read(sources, bytes, count_ifds))
+        for res in processed_results:
+            if isinstance(res, Exception):
+                results.append(Result(success=False, data=None, error=str(res), bytes_fetched=0, requests_made=0))
+            else:
+                results.append(res)
 
     # open output sink
     sink = open(output, "w", encoding="utf-8") if output else sys.stdout
@@ -100,6 +105,7 @@ def main(
     # exit code
     if any(not r.success for r in results):
         raise typer.Exit(code=1)
+
 
 
 if __name__ == "__main__":

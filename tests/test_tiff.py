@@ -18,6 +18,7 @@ async def test_tiff_parser_async(big_tiff_path):
     assert result.data["height"] == 1040
     assert result.data["format"] == "TIFF"
     assert result.data["ifd_count"] is None
+    assert result.requests_made > 0
 
 @pytest.mark.asyncio
 async def test_tiff_parser_async_with_ifd_count(big_tiff_path):
@@ -28,6 +29,7 @@ async def test_tiff_parser_async_with_ifd_count(big_tiff_path):
     assert result.data["height"] == 1040
     assert result.data["format"] == "TIFF"
     assert result.data["ifd_count"] == 1
+    assert result.requests_made > 0
 
 def test_tiff_parser_sync(big_tiff_path):
     reader = open_local_reader(big_tiff_path)
@@ -37,6 +39,7 @@ def test_tiff_parser_sync(big_tiff_path):
     assert result.data["height"] == 1040
     assert result.data["format"] == "TIFF"
     assert result.data["ifd_count"] is None
+    assert result.requests_made > 0
 
 def test_tiff_parser_sync_with_ifd_count(big_tiff_path):
     reader = open_local_reader(big_tiff_path)
@@ -46,6 +49,7 @@ def test_tiff_parser_sync_with_ifd_count(big_tiff_path):
     assert result.data["height"] == 1040
     assert result.data["format"] == "TIFF"
     assert result.data["ifd_count"] == 1
+    assert result.requests_made > 0
 
 def test_parser_registration():
     """Test that TIFF parser is properly registered."""

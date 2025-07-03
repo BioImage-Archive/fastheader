@@ -85,11 +85,11 @@ class MRCParser(HeaderParser):
             if peek_b64:
                 meta["peek_bytes_b64"] = peek_b64
 
-            return Result(True, meta, None, reader.bytes_fetched)
+            return Result(True, meta, None, reader.bytes_fetched, reader.requests_made)
         except ParseError as e:
-            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
         except Exception as e:
-            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
 
     @classmethod
     async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
@@ -113,8 +113,8 @@ class MRCParser(HeaderParser):
             if peek_b64:
                 meta["peek_bytes_b64"] = peek_b64
 
-            return Result(True, meta, None, reader.bytes_fetched)
+            return Result(True, meta, None, reader.bytes_fetched, reader.requests_made)
         except ParseError as e:
-            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
         except Exception as e:
-            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))

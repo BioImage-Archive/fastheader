@@ -15,6 +15,7 @@ class ByteReader(Protocol):
     """Protocol for synchronous byte readers."""
     
     bytes_fetched: int  # running total
+    requests_made: int
 
     def fetch(self, start: int, length: int) -> bytes:
         """Return exactly `length` bytes starting at absolute offset `start`.
@@ -28,6 +29,7 @@ class AsyncByteReader(Protocol):
     """Protocol for asynchronous byte readers."""
     
     bytes_fetched: int  # running total
+    requests_made: int
 
     async def fetch(self, start: int, length: int) -> bytes:
         """Return exactly `length` bytes starting at absolute offset `start`.

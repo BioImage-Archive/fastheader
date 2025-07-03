@@ -64,7 +64,7 @@ class PNGParser(HeaderParser):
                 peek = reader.fetch(0, header_end) + reader.fetch(header_end, peek_len - header_end)
             meta["peek_bytes_b64"] = base64.b64encode(peek).decode()
 
-        return Result(True, meta, None, reader.bytes_fetched)
+        return Result(True, meta, None, reader.bytes_fetched, reader.requests_made)
 
     # --------------------------- sync ---------------------------------- #
     @classmethod
@@ -73,9 +73,9 @@ class PNGParser(HeaderParser):
             w, h, end_off = cls._find_ihdr_sync(reader, _prefetched_header)
             return cls._build_result(w, h, reader, bytes_peek, end_off)
         except ParseError as e:
-            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
         except Exception as e:
-            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
 
     # -------------------------- async ---------------------------------- #
     @classmethod
@@ -84,9 +84,9 @@ class PNGParser(HeaderParser):
             w, h, end_off = await cls._find_ihdr_async(reader, _prefetched_header)
             return cls._build_result(w, h, reader, bytes_peek, end_off)
         except ParseError as e:
-            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, str(e), getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
         except Exception as e:
-            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
+            return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0), getattr(reader, 'requests_made', 0))
 
     @classmethod
     async def _find_ihdr_async(cls, reader, _prefetched_header: bytes | None = None) -> tuple[int, int, int]:

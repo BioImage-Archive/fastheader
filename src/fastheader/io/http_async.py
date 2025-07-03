@@ -38,6 +38,7 @@ class HTTPAsyncByteReader:
     def __init__(self, url: str):
         self.url = url
         self.bytes_fetched = 0
+        self.requests_made = 0
         self.content_length: Optional[int] = None
         self._accept_ranges = False
         self._full_content: Optional[bytes] = None
@@ -48,6 +49,7 @@ class HTTPAsyncByteReader:
         if self._initialized:
             return
         
+        self.requests_made += 1
         async with _get_client() as client:
             try:
                 response = await client.head(self.url)
@@ -73,6 +75,7 @@ class HTTPAsyncByteReader:
         if self._full_content is not None:
             return
         
+        self.requests_made += 1
         async with _get_client() as client:
             try:
                 response = await client.get(self.url)
@@ -90,6 +93,7 @@ class HTTPAsyncByteReader:
         end = start + length - 1
         headers = {'Range': f'bytes={start}-{end}'}
         
+        self.requests_made += 1
         async with _get_client() as client:
             try:
                 response = await client.get(self.url, headers=headers)

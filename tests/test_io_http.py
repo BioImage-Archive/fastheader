@@ -99,6 +99,7 @@ class TestHTTPByteReader:
         
         # Check bytes_fetched accounting
         assert reader.bytes_fetched == 25  # 10 + 10 + 5
+        assert reader.requests_made == 4  # 1 HEAD + 3 GET
     
     def test_overlapping_ranges(self):
         """Test overlapping range requests."""
@@ -110,6 +111,7 @@ class TestHTTPByteReader:
         assert reader.fetch(1, 3) == b"123"
         
         assert reader.bytes_fetched == 13  # 5 + 5 + 3
+        assert reader.requests_made == 4  # 1 HEAD + 3 GET
     
     def test_no_ranges_small_file(self):
         """Test fallback to full GET for small files without range support."""
@@ -121,6 +123,7 @@ class TestHTTPByteReader:
         
         # bytes_fetched should be the full file size (downloaded once)
         assert reader.bytes_fetched == 10
+        assert reader.requests_made == 2  # 1 HEAD + 1 GET
     
     def test_no_ranges_big_file(self):
         """Test error for big files without range support."""
@@ -133,12 +136,14 @@ class TestHTTPByteReader:
         with HTTPByteReader(f"{self.base_url}/test") as reader:
             assert reader.fetch(0, 10) == b"0123456789"
             assert reader.bytes_fetched == 10
+            assert reader.requests_made == 2  # 1 HEAD + 1 GET
     
     def test_factory_function(self):
         """Test factory function."""
         reader = open_http_reader(f"{self.base_url}/test")
         assert isinstance(reader, HTTPByteReader)
         assert reader.fetch(0, 10) == b"0123456789"
+        assert reader.requests_made == 2  # 1 HEAD + 1 GET
 
 
 class TestHTTPAsyncByteReader:
@@ -213,6 +218,7 @@ class TestHTTPAsyncByteReader:
         
         # Check bytes_fetched accounting
         assert reader.bytes_fetched == 25  # 10 + 10 + 5
+        assert reader.requests_made == 4  # 1 HEAD + 3 GET
     
     @pytest.mark.asyncio
     async def test_no_ranges_small_file(self):
@@ -225,6 +231,7 @@ class TestHTTPAsyncByteReader:
         
         # bytes_fetched should be the full file size (downloaded once)
         assert reader.bytes_fetched == 10
+        assert reader.requests_made == 2  # 1 HEAD + 1 GET
     
     @pytest.mark.asyncio
     async def test_context_manager(self):
@@ -232,3 +239,4 @@ class TestHTTPAsyncByteReader:
         async with await open_http_reader_async(f"{self.base_url}/test") as reader:
             assert await reader.fetch(0, 10) == b"0123456789"
             assert reader.bytes_fetched == 10
+            assert reader.requests_made == 2  # 1 HEAD + 1 GET

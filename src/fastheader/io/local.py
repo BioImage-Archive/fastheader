@@ -15,6 +15,7 @@ class LocalByteReader:
     
     def __init__(self, source: Union[Path, str, BinaryIO]):
         self.bytes_fetched = 0
+        self.requests_made = 0
         self._file = None
         self._mmap = None
         self._data = None  # For in-memory sources
@@ -62,6 +63,7 @@ class LocalByteReader:
 
     def fetch(self, start: int, length: int) -> bytes:
         """Return exactly `length` bytes starting at absolute offset `start`."""
+        self.requests_made += 1
         if self._data is None:
             self._ensure_mmap()
         
@@ -109,6 +111,10 @@ class LocalAsyncByteReader:
     @property
     def bytes_fetched(self) -> int:
         return self._sync_reader.bytes_fetched
+
+    @property
+    def requests_made(self) -> int:
+        return self._sync_reader.requests_made
     
     async def fetch(self, start: int, length: int) -> bytes:
         """Return exactly `length` bytes starting at absolute offset `start`."""

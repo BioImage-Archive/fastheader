@@ -9,6 +9,7 @@ class Result:
     data: Dict[str, Any] | None
     error: str | None
     bytes_fetched: int         # filled by I/O layer or parser
+    requests_made: int
 
 
 class UnknownFormatError(RuntimeError):

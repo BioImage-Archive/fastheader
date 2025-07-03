@@ -32,6 +32,7 @@ class HTTPByteReader:
     def __init__(self, url: str):
         self.url = url
         self.bytes_fetched = 0
+        self.requests_made = 0
         self.content_length: Optional[int] = None
         self._accept_ranges = False
         self._full_content: Optional[bytes] = None
@@ -42,6 +43,7 @@ class HTTPByteReader:
     
     def _perform_head(self):
         """Perform HEAD request to check capabilities."""
+        self.requests_made += 1
         try:
             response = self._session.head(self.url, timeout=30)
             if response.status_code >= 400:
@@ -64,6 +66,7 @@ class HTTPByteReader:
         if self._full_content is not None:
             return
         
+        self.requests_made += 1
         try:
             response = self._session.get(self.url, timeout=60)
             if response.status_code >= 400:
@@ -80,6 +83,7 @@ class HTTPByteReader:
         end = start + length - 1
         headers = {'Range': f'bytes={start}-{end}'}
         
+        self.requests_made += 1
         try:
             response = self._session.get(self.url, headers=headers, timeout=30)
             

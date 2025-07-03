@@ -15,21 +15,23 @@ class DummyParser(HeaderParser):
     priority: ClassVar[int] = 50
 
     @classmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         return Result(
             success=True,
             data={"format": "TEST", "width": 100, "height": 200},
             error=None,
-            bytes_fetched=1024
+            bytes_fetched=1024,
+            requests_made=1
         )
 
     @classmethod
-    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         return Result(
             success=True,
             data={"format": "TEST", "width": 100, "height": 200},
             error=None,
-            bytes_fetched=1024
+            bytes_fetched=1024,
+            requests_made=1
         )
 
 
@@ -40,21 +42,23 @@ class HighPriorityParser(HeaderParser):
     priority: ClassVar[int] = 10
 
     @classmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         return Result(
             success=True,
             data={"format": "HIGH", "priority": True},
             error=None,
-            bytes_fetched=512
+            bytes_fetched=512,
+            requests_made=1
         )
 
     @classmethod
-    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         return Result(
             success=True,
             data={"format": "HIGH", "priority": True},
             error=None,
-            bytes_fetched=512
+            bytes_fetched=512,
+            requests_made=1
         )
 
 
@@ -72,12 +76,12 @@ class TestParserRegistry:
             signatures = [(0, b"AUTO")]
             
             @classmethod
-            def read_sync(cls, reader, *, bytes_peek: int | None) -> Result:
-                return Result(True, {}, None, 0)
+            def read_sync(cls, reader, *, bytes_peek: int | None, **kwargs) -> Result:
+                return Result(True, {}, None, 0, 0)
             
             @classmethod
-            async def read(cls, reader, *, bytes_peek: int | None) -> Result:
-                return Result(True, {}, None, 0)
+            async def read(cls, reader, *, bytes_peek: int | None, **kwargs) -> Result:
+                return Result(True, {}, None, 0, 0)
         
         # Manually register since we're using a test registry
         registry.register(TestAutoParser)
@@ -152,7 +156,8 @@ class TestResultAsDict:
             success=True,
             data={"format": "TEST", "width": 100, "height": None},
             error=None,
-            bytes_fetched=1024
+            bytes_fetched=1024,
+            requests_made=1
         )
         
         output = result_asdict(result)
@@ -160,7 +165,8 @@ class TestResultAsDict:
             "success": True,
             "format": "TEST",
             "width": 100,
-            "bytes_fetched": 1024
+            "bytes_fetched": 1024,
+            "requests_made": 1
         }
         assert output == expected
 
@@ -170,14 +176,16 @@ class TestResultAsDict:
             success=False,
             data=None,
             error="Parse failed",
-            bytes_fetched=512
+            bytes_fetched=512,
+            requests_made=1
         )
         
         output = result_asdict(result)
         expected = {
             "success": False,
             "error": "Parse failed",
-            "bytes_fetched": 512
+            "bytes_fetched": 512,
+            "requests_made": 1
         }
         assert output == expected
 
@@ -187,7 +195,8 @@ class TestResultAsDict:
             success=True,
             data={"format": "TEST", "width": 100, "height": 200, "depth": 1},
             error=None,
-            bytes_fetched=1024
+            bytes_fetched=1024,
+            requests_made=1
         )
         
         output = result_asdict(result, fields=["format", "width"])
@@ -195,7 +204,8 @@ class TestResultAsDict:
             "success": True,
             "format": "TEST",
             "width": 100,
-            "bytes_fetched": 1024
+            "bytes_fetched": 1024,
+            "requests_made": 1
         }
         assert output == expected
 
@@ -205,7 +215,8 @@ class TestResultAsDict:
             success=True,
             data={"format": "TEST", "width": 100, "height": None, "depth": None},
             error=None,
-            bytes_fetched=1024
+            bytes_fetched=1024,
+            requests_made=1
         )
         
         output = result_asdict(result)
@@ -213,7 +224,8 @@ class TestResultAsDict:
             "success": True,
             "format": "TEST",
             "width": 100,
-            "bytes_fetched": 1024
+            "bytes_fetched": 1024,
+            "requests_made": 1
         }
         assert output == expected
 

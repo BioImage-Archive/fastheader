@@ -91,7 +91,7 @@ class TestCLI:
         obj = json.loads(result.stdout)
         
         # Should only have the requested fields plus success/bytes_fetched
-        expected_keys = {"success", "format", "width", "bytes_fetched"}
+        expected_keys = {"success", "format", "width", "bytes_fetched", "requests_made"}
         assert set(obj.keys()) == expected_keys
 
     def test_output_file_option(self, runner, tiny_mrc_path):
@@ -169,7 +169,7 @@ class TestCLI:
         assert result.exit_code == 1
         obj = json.loads(result.stdout)
         assert obj["success"] is False
-        assert obj["error"] is not None
+        assert "No such file or directory" in obj["error"]
 
     def test_mixed_success_failure_exit_code(self, runner, tiny_mrc_path):
         """Test exit code 1 when some files fail."""
@@ -190,6 +190,7 @@ class TestCLI:
         # Second should fail
         obj2 = json.loads(lines[1])
         assert obj2["success"] is False
+        assert "No such file or directory" in obj2["error"]
 
     def test_empty_stdin_input(self, runner):
         """Test handling of empty stdin input."""

@@ -101,6 +101,7 @@ class TestJPEGParser:
         assert result.data["height"] == 16
         assert result.data["dtype"] == "uint8"
         assert result.bytes_fetched <= 4096  # Should fit in first chunk
+        assert result.requests_made > 0
 
     @pytest.mark.asyncio
     async def test_tiny_jpeg_async(self, tiny_jpeg_file: Path):
@@ -114,6 +115,7 @@ class TestJPEGParser:
         assert result.data["height"] == 16
         assert result.data["dtype"] == "uint8"
         assert result.bytes_fetched <= 4096
+        assert result.requests_made > 0
 
     def test_large_app1_jpeg_sync(self, large_app1_jpeg_file: Path):
         """Test parsing JPEG with large APP1 segment."""
@@ -126,6 +128,7 @@ class TestJPEGParser:
         assert result.data["dtype"] == "uint8"
         # Should need more than one chunk but less than 64KB
         assert 4096 < result.bytes_fetched < 65536
+        assert result.requests_made > 0
 
     def test_bytes_peek_option(self, tiny_jpeg_file: Path):
         """Test the bytes_peek option."""
@@ -138,6 +141,7 @@ class TestJPEGParser:
         peek_bytes = base64.b64decode(result.data["peek_bytes_b64"])
         assert len(peek_bytes) == tiny_jpeg_file.stat().st_size
         assert peek_bytes.startswith(b"\xFF\xD8")  # Should start with SOI
+        assert result.requests_made > 0
 
     def test_invalid_jpeg_no_soi(self, tmp_path: Path):
         """Test handling of invalid JPEG (no SOI marker)."""
@@ -147,6 +151,7 @@ class TestJPEGParser:
         result = read_header_sync(bad_jpeg)
         assert result.success is False
         assert "Missing SOI marker" in str(result.error)
+        assert result.requests_made > 0
 
     def test_jpeg_no_sof_within_cap(self, tmp_path: Path):
         """Test JPEG that exceeds 64KB without SOF marker."""
@@ -169,6 +174,7 @@ class TestJPEGParser:
         # not "SOF not found within 64 KiB" (which is for when the 64KB read cap is hit).
         # The current parser raises "Unexpected end of file" in this scenario.
         assert "Unexpected end of file" in str(result.error)
+        assert result.requests_made > 0
 
 
     def test_progressive_jpeg(self, tmp_path: Path):
@@ -201,6 +207,7 @@ class TestJPEGParser:
         assert result.data["width"] == 384
         assert result.data["height"] == 256
         assert result.data["dtype"] == "uint8"
+        assert result.requests_made > 0
 
     def test_parser_registration(self):
         """Test that JPEG parser is properly registered."""
@@ -303,6 +310,7 @@ class TestJPEGHTTP:
             assert result.data["dtype"] == "uint8"
             # Should use range requests efficiently
             assert result.bytes_fetched <= 4096
+            assert result.requests_made > 0
             
         finally:
             fastheader.io.http_async._client = original_client
@@ -368,3 +376,4 @@ class TestJPEGHTTP:
             assert result.data["width"] == 32
             assert result.data["height"] == 16
             assert result.data["dtype"] == "uint8"
+            assert result.requests_made > 0
