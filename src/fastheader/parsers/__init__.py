@@ -3,3 +3,4 @@
 from .jpeg import JPEGParser
 from .mrc import MRCParser
 from .png import PNGParser
+from .tiff import TIFFParser

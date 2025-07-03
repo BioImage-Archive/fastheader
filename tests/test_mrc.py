@@ -127,10 +127,11 @@ class TestMRCParser:
         mock_reader.fetch.return_value = bytes(header)
         mock_reader.bytes_fetched = 1024
         
-        result = MRCParser.read_sync(mock_reader, bytes_peek=None)
+        with pytest.warns(UserWarning, match="Invalid MRC magic bytes: b'XXXX'"):
+            result = MRCParser.read_sync(mock_reader, bytes_peek=None)
         
-        assert result.success is False
-        assert "Invalid MRC magic bytes" in result.error
+        assert result.success is True
+        assert result.data["format"] == "MRC"
 
     def test_depth_handling(self):
         """Test that depth is only included when nz > 1."""
