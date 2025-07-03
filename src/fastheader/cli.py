@@ -30,9 +30,9 @@ def iter_sources(files: list[str]) -> list[str]:
     return []
 
 
-async def _batch_read(sources: list[str], bytes_peek: Optional[int]) -> list[Result]:
+async def _batch_read(sources: list[str], bytes_peek: Optional[int], count_ifds: bool) -> list[Result]:
     """Asynchronously read headers from a list of sources."""
-    tasks = [read_header(src, bytes_peek=bytes_peek) for src in sources]
+    tasks = [read_header(src, bytes_peek=bytes_peek, count_ifds=count_ifds) for src in sources]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     processed_results = []
     for res in results:
@@ -51,6 +51,7 @@ def main(
     jsonl: bool = typer.Option(False, "--jsonl", help="Force JSON-lines output"),
     output: Optional[Path] = typer.Option(None, "-o", "--output", help="Write to PATH instead of stdout"),
     sync: bool = typer.Option(False, "--sync", help="Force synchronous I/O"),
+    count_ifds: bool = typer.Option(False, "--count-ifds", help="Count IFDs in TIFF files"),
 ):
     """Extract header info from one or many local paths or URLs."""
     sel_fields = set(fields.split(",")) if fields else None
@@ -70,14 +71,14 @@ def main(
                 # Check if src is a URL
                 parsed_url = urlparse(src)
                 if parsed_url.scheme and parsed_url.netloc:  # It's a URL
-                    res = read_header_sync(src, bytes_peek=bytes)
+                    res = read_header_sync(src, bytes_peek=bytes, count_ifds=count_ifds)
                 else:  # It's a local path
-                    res = read_header_sync(str(Path(src).resolve()), bytes_peek=bytes)
+                    res = read_header_sync(str(Path(src).resolve()), bytes_peek=bytes, count_ifds=count_ifds)
             except Exception as e:
                 res = Result(success=False, data=None, error=str(e), bytes_fetched=0)
             results.append(res)
     else:
-        results = asyncio.run(_batch_read(sources, bytes))
+        results = asyncio.run(_batch_read(sources, bytes, count_ifds))
 
     # open output sink
     sink = open(output, "w", encoding="utf-8") if output else sys.stdout

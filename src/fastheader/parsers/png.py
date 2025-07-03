@@ -68,7 +68,7 @@ class PNGParser(HeaderParser):
 
     # --------------------------- sync ---------------------------------- #
     @classmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         try:
             w, h, end_off = cls._find_ihdr_sync(reader, _prefetched_header)
             return cls._build_result(w, h, reader, bytes_peek, end_off)
@@ -79,7 +79,7 @@ class PNGParser(HeaderParser):
 
     # -------------------------- async ---------------------------------- #
     @classmethod
-    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         try:
             w, h, end_off = await cls._find_ihdr_async(reader, _prefetched_header)
             return cls._build_result(w, h, reader, bytes_peek, end_off)

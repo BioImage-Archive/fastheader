@@ -64,7 +64,7 @@ class MRCParser(HeaderParser):
         return result
 
     @classmethod
-    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    def read_sync(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         try:
             if _prefetched_header and len(_prefetched_header) >= cls._HEADER_SIZE:
                 hdr = _prefetched_header[:cls._HEADER_SIZE]
@@ -92,7 +92,7 @@ class MRCParser(HeaderParser):
             return Result(False, None, f"Unexpected error: {e}", getattr(reader, 'bytes_fetched', 0))
 
     @classmethod
-    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None) -> Result:
+    async def read(cls, reader, *, bytes_peek: int | None, _prefetched_header: bytes | None = None, **kwargs) -> Result:
         try:
             if _prefetched_header and len(_prefetched_header) >= cls._HEADER_SIZE:
                 hdr = _prefetched_header[:cls._HEADER_SIZE]

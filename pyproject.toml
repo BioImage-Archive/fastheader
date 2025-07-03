@@ -7,9 +7,9 @@ description = "A python library and client for extracting file headers quickly"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "typer",
     "requests",
     "httpx",
-    "typer",
 ]
 
 [project.scripts]
@@ -25,6 +25,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--strict-markers --strict-config"
+pythonpath = ["src", "."]
 markers = [
     "asyncio: marks tests as async",
 ]

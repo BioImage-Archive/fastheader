@@ -5,10 +5,10 @@ from .core.registry import _REGISTRY                                  # singleto
 from .io import open_reader, open_reader_async                        # Task 1
 
 # Import parsers to trigger registration
-from .parsers import mrc, jpeg  # noqa: F401
+from .parsers import mrc, jpeg, tiff, png  # noqa: F401
 
 
-async def read_header(source, *, bytes_peek: int | None = None) -> Result:
+async def read_header(source, *, bytes_peek: int | None = None, **parser_options) -> Result:
     """Read header asynchronously from a source (path, URL, or file-like object)."""
     # 1) open reader + sniff first 4 KB (or whatever is available)
     reader = await open_reader_async(source)
@@ -31,10 +31,10 @@ async def read_header(source, *, bytes_peek: int | None = None) -> Result:
 
     parser_cls = _REGISTRY.choose(source, first_kb)
     # 2) delegate - pass the already-fetched data to avoid double-fetch
-    return await parser_cls.read(reader, bytes_peek=bytes_peek, _prefetched_header=first_kb)
+    return await parser_cls.read(reader, bytes_peek=bytes_peek, _prefetched_header=first_kb, **parser_options)
 
 
-def read_header_sync(source, *, bytes_peek: int | None = None) -> Result:
+def read_header_sync(source, *, bytes_peek: int | None = None, **parser_options) -> Result:
     """Read header synchronously from a source (path, URL, or file-like object)."""
     reader = open_reader(source)
     first_kb = b''
@@ -55,7 +55,7 @@ def read_header_sync(source, *, bytes_peek: int | None = None) -> Result:
     # Parsers must handle small/empty _prefetched_header.
 
     parser_cls = _REGISTRY.choose(source, first_kb)
-    return parser_cls.read_sync(reader, bytes_peek=bytes_peek, _prefetched_header=first_kb)
+    return parser_cls.read_sync(reader, bytes_peek=bytes_peek, _prefetched_header=first_kb, **parser_options)
 
 
 __all__ = [
